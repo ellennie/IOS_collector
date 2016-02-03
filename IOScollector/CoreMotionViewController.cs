@@ -27,7 +27,7 @@ namespace CoreMotion
 		//max[0]is max for resultant, [1] for x,[2] for y, [3]for z; same as min,avg,sum，reading
 		int count = -1;
 		CMMotionManager motionManager = new CMMotionManager ();
-		string[] items = { "Car", "Bus", "Train", "Metro", "Walk", "Bike", "Cancel" };
+		string[] items = { "iOS_Car", "iOS_Bus", "iOS_Train", "iOS_Metro", "iOS_Walk", "iOS_Bike", "Cancel" };
 
 		partial void UIButton21_TouchUpInside (UIButton sender)
 		{
@@ -110,14 +110,15 @@ namespace CoreMotion
 			builder.Append("],");
 			builder.Append("\"EndTime\":\"" + stoptime.ToString()+"\",");
 			var alert = UIAlertController.Create ("Mode", builder.ToString(), UIAlertControllerStyle.Alert);
-			alert.AddAction (UIAlertAction.Create ("Car",UIAlertActionStyle.Default, action => 
-				builder.Append("\"Mode\":\"Car\"}"))); 
-			alert.AddAction (UIAlertAction.Create ("Bus",UIAlertActionStyle.Default, action =>
+			alert.AddAction (UIAlertAction.Create ("iOS_Car",UIAlertActionStyle.Default, async action => {
+				builder.Append("\"Mode\":\"Car\"}"); await UseContainerSAS(sas,"iOS_Car",builder.ToString());}));
+
+			alert.AddAction (UIAlertAction.Create ("iOS_Bus",UIAlertActionStyle.Default, action =>
 				builder.Append("\"Model\":\"Bus\"}")));
-			alert.AddAction (UIAlertAction.Create ("Train",UIAlertActionStyle.Default, action =>  				builder.Append("\"Mode\":\"Train\"}")));
-			alert.AddAction (UIAlertAction.Create ("Metro",UIAlertActionStyle.Default, action =>  				builder.Append("\"Mode\":\"Metro\"}")));
-			alert.AddAction (UIAlertAction.Create ("Walk",UIAlertActionStyle.Default, action =>  				builder.Append("\"Mode\":\"Walk\"}")));
-			alert.AddAction (UIAlertAction.Create ("Bike",UIAlertActionStyle.Default, action =>  				builder.Append("\"Mode\":\"Bike\"}")));
+			alert.AddAction (UIAlertAction.Create ("iOS_Train",UIAlertActionStyle.Default, action =>  				builder.Append("\"Mode\":\"Train\"}")));
+			alert.AddAction (UIAlertAction.Create ("iOS_Metro",UIAlertActionStyle.Default, action =>  				builder.Append("\"Mode\":\"Metro\"}")));
+			alert.AddAction (UIAlertAction.Create ("iOS_Walk",UIAlertActionStyle.Default, action =>  				builder.Append("\"Mode\":\"Walk\"}")));
+			alert.AddAction (UIAlertAction.Create ("iOS_Bike",UIAlertActionStyle.Default, action =>  				builder.Append("\"Mode\":\"Bike\"}")));
 			alert.AddAction (UIAlertAction.Create ("Cancel", UIAlertActionStyle.Cancel, null));
 			PresentViewController (alert, animated: true, completionHandler: null);
 		}  
@@ -143,35 +144,39 @@ namespace CoreMotion
 			return (toInterfaceOrientation != UIInterfaceOrientation.PortraitUpsideDown);
 		}
 
+		static async Task UseContainerSAS(string sas, string mode, string json)
+		{
+			//Try performing container operations with the SAS provided.
+			//to perform container operations on Microsft Azure Blob Storage 
+			//Return a reference to the container using the SAS URI.
+			CloudBlobContainer container = new CloudBlobContainer(new Uri(sas));
+			string date = DateTime.Now.ToString();
+			try
+			{
+				//Write operation: write a new blob to the container.
+				CloudBlockBlob blob = container.GetBlockBlobReference(mode + date + ".json");
 
-		// to perform container operations on Microsft Azure Blob Storage 
-
+				string blobcontent = json; 
+				MemoryStream msWrite = new
+					MemoryStream(Encoding.UTF8.GetBytes(blobContent));
+				msWrite.Position = 0;
+				using (msWrite)
+				{
+					await blob.UploadFromStreamAsync(msWrite);
+				}
+				Console.WriteLine("Write operation succeeded for SAS " + sas);
+				Console.WriteLine();
+			}
+			catch(Exception e)
+			{ 
+				Console.WriteLine("Write operation failed for SAS " + sas);
+				Console.WriteLine("Additional error information: " + e.Message);
+				Console.WriteLine();
+			}
+		}
 	}
 }
-
-	static async Task UseContainerSAS(string sas, string mode, string json)
-	{
-		//Try performing container operations with the SAS provided.
-
-		//Return a reference to the container using the SAS URI.
-		CloudBlobContainer container = new CloudBlobContainer(new Uri(sas));
-		string date = DateTime.Now.ToString();
-		try
-		{
-			//Write operation: write a new blob to the container.
-			CloudBlockBlob blob = container.GetBlockBlobReference(mode + date + ".json");
-
-			string blobcontent = json; 
-			MemoryStream msWrite = new
-			MemoryStream(Encoding.UTF8.GetBytes(blobContent));
-			msWrite.Position = 0;
-			using (msWrite)
-			{
-				await blob.UploadFromStreamAsync(msWrite);
-			}
-			Console.WriteLine("Write operation succeeded for SAS " + sas);
-			Console.WriteLine();
-		}
+		
 		/*catch (Exception e)
 		{
 			Console.WriteLine("Write operation failed for SAS " + sas);
@@ -197,4 +202,4 @@ namespace CoreMotion
 		try
 		{*/
 
-	} 
+
